@@ -5,10 +5,7 @@ import javax.annotation.processing.*
 import javax.lang.model.SourceVersion
 import javax.lang.model.element.ElementKind
 import javax.lang.model.element.ExecutableElement
-import javax.lang.model.element.Modifier
 import javax.lang.model.element.TypeElement
-import javax.lang.model.type.DeclaredType
-import javax.lang.model.type.TypeMirror
 import javax.tools.Diagnostic
 import javax.tools.StandardLocation
 
@@ -61,11 +58,15 @@ class SpikotAnnotationProcessor : AbstractProcessor() {
                         tmp
                 }.toString()
 
-            val targetType = (resolvePlayerPropertyType(element.superclass)
-                ?: element.interfaces.asSequence()
-                    .map(::resolvePlayerPropertyType)
-                    .filterNotNull()
-                    .first()).qualifiedName.toString()
+            val visibility = annotation.elementValues.entries
+                .find { it.key.simpleName.toString() == "visibility" }!!.value.value.toString().toLowerCase()
+
+            val targetType = getTypeElement(
+                wrapJavaPrimitive(
+                    annotation.elementValues.entries
+                        .find { it.key.simpleName.toString() == "type" }!!.value.value.toString()
+                )
+            ).qualifiedName.toString()
 
             processingEnv.filer.createResource(
                 StandardLocation.SOURCE_OUTPUT,
@@ -78,7 +79,7 @@ class SpikotAnnotationProcessor : AbstractProcessor() {
                         |import org.bukkit.entity.Player
                         |import io.github.ReadyMadeProgrammer.Spikot.utils.*
                         |
-                        |var Player.$name: ${convertKotlinType(targetType)}?
+                        |$visibility var Player.$name: ${convertKotlinType(targetType)}?
                         |   get() = player[${className}]
                         |   set(value){
                         |       if(value == null){
@@ -94,7 +95,19 @@ class SpikotAnnotationProcessor : AbstractProcessor() {
         return true
     }
 
-    private fun convertKotlinType(name: String): String = when{
+    private fun wrapJavaPrimitive(name: String): String = when (name) {
+        "boolean" -> "java.lang.Boolean"
+        "byte" -> "java.lang.Byte"
+        "short" -> "java.lang.Short"
+        "char" -> "java.lang.Character"
+        "int" -> "java.lang.Integer"
+        "long" -> "java.lang.Long"
+        "float" -> "java.lang.Float"
+        "double" -> "java.lang.Double"
+        else -> name
+    }
+
+    private fun convertKotlinType(name: String): String = when {
         name == "java.lang.Boolean" -> "Boolean"
         name == "java.lang.Byte" -> "Byte"
         name == "java.lang.Short" -> "Short"
@@ -103,7 +116,7 @@ class SpikotAnnotationProcessor : AbstractProcessor() {
         name == "java.lang.Long" -> "Long"
         name == "java.lang.Float" -> "Float"
         name == "java.lang.Double" -> "Double"
-        name.endsWith("[]") -> "Array<${convertKotlinType(name.substring(0,name.length-2))}>"
+        name.endsWith("[]") -> "Array<${convertKotlinType(name.substring(0, name.length - 2))}>"
         else -> name
     }
 
@@ -133,38 +146,5 @@ class SpikotAnnotationProcessor : AbstractProcessor() {
                 }
             }
         }
-    }
-
-    private fun resolvePlayerPropertyType(mirror: TypeMirror?): TypeElement? {
-        if (mirror == null)
-            return null
-        if (processingEnv.typeUtils.isSameType(
-                processingEnv.typeUtils.erasure(mirror),
-                getTypeElement("io.github.ReadyMadeProgrammer.Spikot.misc.Property").asType()
-            )
-        ) {
-            return getTypeElement((mirror as DeclaredType).typeArguments[0].toString())
-        }
-        val genericAnnotation = GenericPropertyType::class.qualifiedName
-        val staticAnnotation = StaticPropertyType::class.qualifiedName
-        val annotations = (processingEnv.typeUtils.asElement(mirror) as TypeElement).annotationMirrors
-        val generic =
-            annotations.find { (it.annotationType.asElement() as TypeElement).qualifiedName.toString() == genericAnnotation}
-        val static =
-            annotations.find { (it.annotationType.asElement() as TypeElement).qualifiedName.toString() == staticAnnotation }
-        if (generic != null) {
-            val index = generic.elementValues.entries
-                .find { it.key.simpleName.toString() == "value" }!!
-                .value.value as Int
-            val type = mirror as DeclaredType
-            return getTypeElement(type.typeArguments[index].toString())
-        }
-        if (static != null) {
-            return getTypeElement(
-                static.elementValues.entries
-                    .find { it.key.simpleName.toString() == "value" }!!.value.value.toString()
-            )
-        }
-        return null
     }
 }
