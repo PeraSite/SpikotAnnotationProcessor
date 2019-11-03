@@ -62,7 +62,7 @@ class PlayerPropertyProcessor : AbstractProcessor() {
                     it.write(
                         """package ${packageElement.qualifiedName}
                             |import org.bukkit.entity.Player
-                            |import io.github.ReadyMadeProgrammer.Spikot.utils.*
+                            |import kr.heartpattern.spikot.utils.*
                             |
                             |$visibility var Player.$name: ${convertKotlinType(
                             targetType
@@ -81,7 +81,7 @@ class PlayerPropertyProcessor : AbstractProcessor() {
                     it.write(
                         """package ${packageElement.qualifiedName}
                             |import org.bukkit.entity.Player
-                            |import io.github.ReadyMadeProgrammer.Spikot.utils.*
+                            |import kr.heartpattern.spikot.utils.*
                             |
                             |$visibility var Player.$name: ${convertKotlinType(
                             targetType
