@@ -1,4 +1,4 @@
-package io.github.readymadeprogrammer.spikotannotationprocessor
+package kr.heartpattern.spikotannotationprocessor
 
 import kotlin.reflect.KClass
 import kotlin.reflect.KVisibility
@@ -8,5 +8,6 @@ import kotlin.reflect.KVisibility
 annotation class PlayerProperty(
     val type: KClass<*>,
     val visibility: KVisibility = KVisibility.PUBLIC,
-    val name: String = ""
+    val name: String = "",
+    val nullable: Boolean = true
 )
