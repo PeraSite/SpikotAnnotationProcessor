@@ -21,7 +21,6 @@ dependencies {
     api("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version")
     api("org.jetbrains.kotlin:kotlin-reflect:$kotlin_version")
     
-    api("com.github.PeraSite:Spikot:-SNAPSHOT")
     api("com.google.auto.service:auto-service:1.0-rc6")
     kapt("com.google.auto.service:auto-service:1.0-rc6")
 }
